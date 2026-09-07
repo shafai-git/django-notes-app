@@ -1,28 +1,52 @@
+@Library("Shared") _
 pipeline {
-    agent any
-    stages{
-        stage("Clone Code"){
+    agent { label "rizvi" }
+
+    stages {
+        
+        stage("Hello"){
             steps{
-                git url: "https://github.com/LondheShubham153/django-notes-app.git", branch: "main"
-            }
-        }
-        stage("Build and Test"){
-            steps{
-                sh "docker build . -t note-app-test-new"
-            }
-        }
-        stage("Push to Docker Hub"){
-            steps{
-                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
-                sh "docker tag note-app-test-new ${env.dockerHubUser}/note-app-test-new:latest"
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker push ${env.dockerHubUser}/note-app-test-new:latest"
+                script{
+                    hello()
                 }
             }
         }
-        stage("Deploy"){
-            steps{
-                sh "docker-compose down && docker-compose up -d"
+        
+        stage("Code") {
+            steps {
+                script{
+                clone("https://github.com/shafai-git/django-notes-app.git", "dev")
+                }
+            }
+        }
+
+        stage("Build") {
+            steps {
+                script{
+                docker_build("notes-app" , "latest" , "shafai-git")
+                }
+            }
+        }
+
+        stage("Test") {
+            steps {
+                echo "This is testing the code"
+            }
+        }
+
+        stage("Push to Docker Hub") {
+            steps {
+                script{
+                    docker_push("notes-app", "latest" , "shafai-git")
+                }
+            }
+        }
+
+        stage("Deploy") {
+            steps {
+                script{
+                docker_compose()
+                }
             }
         }
     }
